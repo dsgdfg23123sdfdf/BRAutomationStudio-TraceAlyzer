@@ -355,22 +355,26 @@ def gui():
         if output_filepath:
             export_for_plotjuggler(time_data, value_data, variable_names, output_filepath)
 
+    # Create a new frame for the buttons to align them horizontally, like toolbar buttons
+    button_frame = Frame(root)
+    button_frame.pack(side=tk.TOP, fill=tk.X)
+
     # Button to load new data
-    load_button = Button(root, text="Load Data", command=load_and_plot_data)
-    load_button.pack()
+    load_button = Button(button_frame, text="Load Data", command=load_and_plot_data)
+    load_button.pack(side=tk.LEFT)
 
     # Button to export visible data
-    export_visible_button = Button(root, text="Export Visible Data to console", command=lambda: export_visible_data(
+    export_visible_button = Button(button_frame, text="Export Visible Data to console", command=lambda: export_visible_data(
         time_data, value_data, selections, variable_names, ax
     ))
-    export_visible_button.pack()
+    export_visible_button.pack(side=tk.LEFT)
 
     # Button to export data to PlotJuggler
-    export_plotjuggler_button = Button(root, text="Export to PlotJuggler", command=export_to_plotjuggler)
-    export_plotjuggler_button.pack()
+    export_plotjuggler_button = Button(button_frame, text="Export to PlotJuggler", command=export_to_plotjuggler)
+    export_plotjuggler_button.pack(side=tk.LEFT)
 
     root.mainloop()
 
 if __name__ == "__main__":
-    print("Welcome to Trace Analyzer Version 1.0")
+    print("Welcome to Trace Analyzer Version 2.0")
     gui()
