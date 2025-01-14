@@ -1,8 +1,14 @@
 import subprocess
 import sys
+import pandas as pd
+import numpy as np
+import tkinter as tk
+from tkinter import Tk, Checkbutton, Button, Entry, Label, IntVar, Frame, Scrollbar, VERTICAL, filedialog, LEFT, StringVar
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+import matplotlib.pyplot as plt
 
+# Function to install the specified Python package using pip.
 def install(package):
-    # Install the specified Python package using pip.
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
 # Try importing necessary packages and install them if not already installed.
@@ -24,15 +30,12 @@ except ImportError:
     install('matplotlib')
     import matplotlib.pyplot as plt
 
-import tkinter as tk
-from tkinter import Tk, Checkbutton, Button, Entry, Label, IntVar, Frame, Scrollbar, VERTICAL, filedialog, LEFT, StringVar
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-
 try:
     from matplotlib.widgets import SpanSelector
 except ImportError:
     install('matplotlib')
     from matplotlib.widgets import SpanSelector
+
 
 class CustomToolbar(NavigationToolbar2Tk):
     def __init__(self, canvas, window):
@@ -115,9 +118,6 @@ def plot_data(time_data, value_data, variable_names, selections, scales, offsets
     # Plot the selected data on the graph.
     print("Debug: Plotting data...")
 
-    for color_var in colors:
-        print(f"Debug: Current color value: {color_var.get()}")
-
     global connection_id
 
     current_xlim = ax.get_xlim()
@@ -165,7 +165,6 @@ def plot_data(time_data, value_data, variable_names, selections, scales, offsets
 
     def on_click(event):
         # Handle mouse click event for cursor interaction.
-        print("-------------Debug on_click called---------------")
         if event.inaxes != ax:
             return  # Ignore clicks outside the axes
 
@@ -189,6 +188,21 @@ def plot_data(time_data, value_data, variable_names, selections, scales, offsets
 
     fig.canvas.draw()
 
+# Function to export data to PlotJuggler format 
+def export_for_plotjuggler(time_data, value_data, variable_names, output_filepath):
+    # Initialize an empty DataFrame to store the export data
+    export_data = pd.DataFrame()
+
+    # Iterate through the variable names and add time and value columns to export_data
+    for i, name in enumerate(variable_names):
+        clean_name = name.replace('"', '')
+        export_data[f'{clean_name}_Time'] = time_data.iloc[:, i]
+        export_data[f'{clean_name}_Value'] = value_data.iloc[:, i]
+
+    # Save the DataFrame to CSV
+    export_data.to_csv(output_filepath, index=False, quoting=1) 
+    print(f"Data exported to {output_filepath} for PlotJuggler.")
+
 def update_cursor_values(cursor, lines, ax, cursor_values):
     # Update the cursor's data when clicked.
     x_pos = cursor.get_xdata()[0]
@@ -202,7 +216,6 @@ def update_cursor_values(cursor, lines, ax, cursor_values):
 
 def update_legend(lines, ax, cursor_values, cursor1, cursor2, variable_names, selections):
     # Update the legend with the current cursor values.
-    print("-------Debug update_legend called------")
     line_labels = [line.get_label() for line in lines]
     new_labels = []
 
@@ -337,15 +350,24 @@ def gui():
 
             plot_data(time_data, value_data, variable_names, selections, scale_entries, offset_entries, color_entries, header_lines, fig, ax, initial=True)
 
+    def export_to_plotjuggler():
+        output_filepath = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv")])
+        if output_filepath:
+            export_for_plotjuggler(time_data, value_data, variable_names, output_filepath)
+
     # Button to load new data
     load_button = Button(root, text="Load Data", command=load_and_plot_data)
     load_button.pack()
 
     # Button to export visible data
-    export_button = Button(root, text="Export Visible Data", command=lambda: export_visible_data(
+    export_visible_button = Button(root, text="Export Visible Data to console", command=lambda: export_visible_data(
         time_data, value_data, selections, variable_names, ax
     ))
-    export_button.pack()
+    export_visible_button.pack()
+
+    # Button to export data to PlotJuggler
+    export_plotjuggler_button = Button(root, text="Export to PlotJuggler", command=export_to_plotjuggler)
+    export_plotjuggler_button.pack()
 
     root.mainloop()
 
